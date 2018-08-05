@@ -1,0 +1,42 @@
+
+drop table if exists alliance;
+drop table if exists player;
+drop table if exists town;
+
+
+CREATE TABLE Alliance
+  (
+    ID INTEGER NOT NULL auto_increment,
+    Name VARCHAR(50) ,
+    Points  INTEGER ,
+    Towns   INTEGER ,
+    Members INTEGER ,
+    Rank    INTEGER,
+    PRIMARY KEY(ID)
+  ) ;
+
+CREATE TABLE Player
+  (
+    ID INTEGER NOT NULL auto_increment,
+    Name VARCHAR(50) ,
+    Points      INTEGER ,
+    Rank        INTEGER ,
+    Alliance_ID INTEGER NOT NULL,
+    PRIMARY KEY(ID)
+  ) ;
+
+CREATE TABLE Town
+  (
+    ID INTEGER NOT NULL auto_increment,
+    Name VARCHAR(50) ,
+    IslandX        INTEGER ,
+    IslandY        INTEGER ,
+    NumberOnIsland INTEGER ,
+    Points         INTEGER ,
+    Player_ID      INTEGER NOT NULL,
+    PRIMARY KEY(ID)
+  ) ;
+
+ALTER TABLE Player ADD CONSTRAINT Player_Alliance_FK FOREIGN KEY ( Alliance_ID ) REFERENCES Alliance ( ID ) ;
+
+ALTER TABLE Town ADD CONSTRAINT Town_Player_FK FOREIGN KEY ( Player_ID ) REFERENCES Player ( ID ) ;
