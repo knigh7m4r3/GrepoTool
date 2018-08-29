@@ -1,4 +1,4 @@
-package model;
+package de.grepo.Model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;

@@ -1,4 +1,4 @@
-package model;
+package de.grepo.Model;
 
 import java.util.ArrayList;
 import java.util.List;

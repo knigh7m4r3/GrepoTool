@@ -5,19 +5,30 @@
  http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
 	version="1.0">
 
-	<persistence-unit name="GrepoTool">
-        <provider>org.hibernate.ejb.HibernatePersistence</provider>
-        <properties>
-            <property name="hibernate.connection.url" value="jdbc:mysql://YOURSERVER:3306/grepotool" />
-            <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
-            <property name="hibernate.connection.username" value="NAME" />
-            <property name="hibernate.connection.password" value="PASSWORD" />
-            <property name="hibernate.archive.autodetection" value="class" />
-			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
-            <property name="hibernate.show_sql" value="false" />
-            <property name="hibernate.format_sql" value="false" />
-            <property name="hibernate.hbm2ddl.auto" value="create" />
-        </properties>
-    </persistence-unit>
-	
+<!-- 	<persistence-unit name="GrepoTool"> -->
+<!--         <provider>org.hibernate.ejb.HibernatePersistence</provider> -->
+<!--         <properties> -->
+<!--             <property name="hibernate.connection.url" value="jdbc:mysql://server-mst:3306/grepotool" /> -->
+<!--             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" /> -->
+<!--             <property name="hibernate.connection.username" value="Andre" /> -->
+<!--             <property name="hibernate.connection.password" value="310314" /> -->
+<!--             <property name="hibernate.archive.autodetection" value="class" /> -->
+<!-- 			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/> -->
+<!--             <property name="hibernate.show_sql" value="false" /> -->
+<!--             <property name="hibernate.format_sql" value="false" /> -->
+<!--             <property name="hibernate.hbm2ddl.auto" value="create" /> -->
+<!--         </properties> -->
+<!--     </persistence-unit> -->
+  <persistence-unit name="GrepoTool" transaction-type="RESOURCE_LOCAL">
+    <properties>
+      <property name="javax.persistence.jdbc.driver" value="org.h2.Driver" />
+      <property name="javax.persistence.jdbc.url"    value="jdbc:h2:file:./src/main/resources/DB" />
+      <property name="javax.persistence.jdbc.user"	 value="sa" />
+      <property name="javax.persistence.jdbc.password" value="" />
+      <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+      <property name="hibernate.hbm2ddl.auto" value="create-drop" />
+      <property name="show_sql" value="true"/>
+      <property name="hibernate.temp.use_jdbc_metadata_defaults" value="false"/>
+    </properties>
+  </persistence-unit>
 </persistence>

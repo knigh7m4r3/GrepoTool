@@ -4,54 +4,47 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import javax.persistence.Query;
 
-import model.Alliance;
-import model.DBFactory;
-import model.Player;
-import model.Town;
+import de.grepo.Model.Alliance;
+import de.grepo.Model.DBFactory;
+import de.grepo.Model.Player;
+import de.grepo.Model.Town;
 
-/**
- * Hello world!
- *
- */
 public class App {
-	
-	public static void mainTest(String [] args) {
-		final Town blexen = new Town(409,516);
-		
-		final Town mimi = new Town(403,539);
-		
-		final Town chris = new Town(412,481);
-		
-		final Town holsten = new Town(394,536);
-		
-		System.out.println("me -> mimi:\t"+blexen.calcDist(mimi));
-		System.out.println("me -> chris:\t"+blexen.calcDist(chris));
-		System.out.println("me -> holsten:\t"+blexen.calcDist(holsten));
-		
-		
-	}
+	 
 	
 	private static boolean cleanAndParse = true;
+	private static String PWD;
 	
 	@SuppressWarnings("unchecked")
 	public static void main( String[] args ) throws IOException {
 		DBFactory.initEM();
-		
+		PWD = System.getProperty("user.dir");
+		System.out.println("pwd:\t"+PWD);
+
 		if(cleanAndParse) {
 			DBFactory.cleanDB();
-
+			if(args.length > 0 && args[0].length() == 4) {
+				downloadData(args[1]);
+			}else {
+				downloadData();
+			}
 			parseAlliance();
 			parsePlayer();
 			parseTown();
@@ -86,28 +79,43 @@ public class App {
 			}
 		}
 		
-		final Path out = Paths.get("./src/main/resources/txt/out.txt");
+		final Path out = Paths.get(PWD+"/out.txt"); 
+		out.toFile().createNewFile();
 		final List<String> outLines = new ArrayList<>();
 		
 		for (Entry<Player, List<Town>> set : townsNearToBlexen.entrySet()) {
 			//Check if the current Player has more than half of his towns in our area and is "reachable"
 			if(set.getKey() != null && set.getKey().getTowns() != null && set.getValue().size() >= (set.getKey().getTowns().size() / 2.0)) {
-				System.out.println("Player found!\t"+set.getKey().toSimpleString());
-				outLines.add(set.getKey().toSimpleString());
+				String playerString = set.getKey().toSimpleString().replaceAll("%C3%A4", "ä");
+				playerString = playerString.replaceAll("%C3%B6", "ö");
+				playerString = playerString.replaceAll("%C3%BC", "ü");
+				
+				System.out.println("Player found!\t"+playerString);
+				outLines.add(playerString);
 			}
 		}
 		
 		Files.write(out, outLines, Charset.forName("UTF-8"));
+
+		//CleanUp
+		final Path p = Paths.get(PWD+"/players.txt");
+		final Path t = Paths.get(PWD+"/towns.txt");
+		final Path a = Paths.get(PWD+"/alliances.txt");
+		p.toFile().delete();
+		t.toFile().delete();
+		a.toFile().delete();
 		
 		
 		DBFactory.getEm().getTransaction().commit();
+		DBFactory.close();
+		deleteFileOrFolder(Paths.get(PWD+"/src")); 
 	}
 
 
 
 	private static void parseAlliance() throws IOException {
 		System.out.print("Inserting Alliances\t [ ");
-		final File file = new File("./src/main/resources/txt/alliances.txt");
+		final File file = new File(PWD+"/alliances.txt");
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line;
@@ -145,7 +153,7 @@ public class App {
 			allianceMap.put(a.getId(), a);
 		}
 		
-		final File file = new File("./src/main/resources/txt/players.txt");
+		final File file = new File(PWD+"/players.txt");
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line;
@@ -198,6 +206,7 @@ public class App {
 		System.out.println(" ] Done! in \t"+ (end-start)+" ms");
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void parseTown() throws NumberFormatException, IOException {
 		final long start = System.currentTimeMillis();
 		System.out.print("Inserting Towns\t\t [ ");
@@ -208,7 +217,7 @@ public class App {
 			playerMap.put(p.getId(), p);
 		}
 		
-		final File file = new File("./src/main/resources/txt/towns.txt");
+		final File file = new File(PWD+"/towns.txt");
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		String line;
@@ -264,4 +273,72 @@ public class App {
 		System.out.println(" ] Done! in \t"+ (end-start)+" ms");
 	}
 
+	
+	private static void downloadData() {
+		downloadData("de95");
+	}
+	
+	private static void downloadData(String world) {
+		
+		final String GREPOURL = "https://"+world+".grepolis.com/data/";
+		
+		createFile(GREPOURL+"players.txt", "players.txt");
+		createFile(GREPOURL+"towns.txt", "towns.txt");
+		createFile(GREPOURL+"alliances.txt", "alliances.txt");
+		
+		
+
+	}
+	
+	private static void createFile(String link, String filename) {
+		System.out.print("Downloading and reading\t"+filename+"\t...\t");
+		URL url;
+		try {
+			url = new URL(link);
+			Scanner s = new Scanner(url.openStream());
+			final List<String> lines = new ArrayList<>();
+			while(s.hasNext()) {
+				lines.add(s.nextLine());
+			}
+			
+			Path path = Paths.get(PWD+"/"+filename);
+			if(path.toFile().exists()) {
+				path.toFile().delete();
+			}
+			path.toFile().createNewFile();
+			Files.write(path, lines, Charset.forName("UTF-8"));
+			s.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Done!");
+	}
+	
+	
+	private static void deleteFileOrFolder(final Path path) throws IOException {
+		  Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
+		    @Override public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
+		      throws IOException {
+		      Files.delete(file);
+		      return FileVisitResult.CONTINUE;
+		    }
+
+		    @Override public FileVisitResult visitFileFailed(final Path file, final IOException e) {
+		      return handleException(e);
+		    }
+
+		    private FileVisitResult handleException(final IOException e) {
+		      e.printStackTrace(); // replace with more robust error handling
+		      return FileVisitResult.TERMINATE;
+		    }
+
+		    @Override public FileVisitResult postVisitDirectory(final Path dir, final IOException e)
+		      throws IOException {
+		      if(e!=null)return handleException(e);
+		      Files.delete(dir);
+		      return FileVisitResult.CONTINUE;
+		    }
+		  });
+		};
 }
+

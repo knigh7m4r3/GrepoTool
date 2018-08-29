@@ -1,4 +1,4 @@
-package model;
+package de.grepo.Model;
 
 import java.util.List;
 
@@ -68,6 +68,13 @@ public class DBFactory {
 
 	}
 
+	public static void close() {
+		em.close();
+		em.getEntityManagerFactory().close();
+		
+		
+	}
+	
 	public static EntityManager getEm() {
 		return em;
 	}
